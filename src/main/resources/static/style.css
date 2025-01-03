@@ -1,0 +1,668 @@
+:root {
+    --primary-color: #2196F3;
+    --primary-hover: #1976D2;
+    --error-color: #f44336;
+    --success-color: #4CAF50;
+    --border-color: #E0E0E0;
+    --background-light: #F5F5F5;
+    --text-color: #333;
+    --sidebar-width: 280px;
+    --header-height: 48px;
+    --sidebar-bg: #1E1E1E;
+    --content-bg: #FFFFFF;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: var(--background-light);
+    color: var(--text-color);
+    height: 100vh;
+    overflow: hidden;
+}
+
+.app-container {
+    display: flex;
+    height: 100vh;
+}
+
+/* 侧边栏样式 */
+.sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--sidebar-bg);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logo {
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    font-size: 1.1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.logo i {
+    font-size: 1.3rem;
+    margin-right: 10px;
+    color: var(--primary-color);
+}
+
+.data-sources {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.data-sources-header {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: #888;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.data-source-item {
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.data-source-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.data-source-item.active {
+    background-color: var(--primary-color);
+}
+
+.data-source-item i {
+    margin-right: 8px;
+    font-size: 1.1rem;
+}
+
+.data-source-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.data-source-actions {
+    display: none;
+    gap: 4px;
+}
+
+.data-source-item:hover .data-source-actions {
+    display: flex;
+}
+
+/* 主内容区样式 */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--content-bg);
+    overflow: hidden;
+}
+
+/* 查询界面样式 */
+.query-interface {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.query-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* 左侧 RowKey 列表样式 */
+.rowkey-list {
+    width: 300px;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+}
+
+.panel-header {
+    padding: 12px 16px;
+    background: #f5f5f5;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.list-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+}
+
+.rowkey-item {
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 0.9rem;
+}
+
+.rowkey-item:hover {
+    background-color: #f5f5f5;
+}
+
+.rowkey-item.active {
+    background-color: #e3f2fd;
+    color: var(--primary-color);
+}
+
+.rowkey-item i {
+    margin-right: 8px;
+    font-size: 1.1rem;
+    color: #666;
+}
+
+/* 右侧数据详情样式 */
+.data-detail {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    overflow: hidden;
+}
+
+.detail-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+/* 表格样式 */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+}
+
+.data-table th,
+.data-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border: 1px solid #e0e0e0;
+}
+
+.data-table th {
+    background-color: #f5f5f5;
+    font-weight: 500;
+    color: #666;
+}
+
+.data-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* 工具栏样式 */
+.query-toolbar {
+    padding: 12px;
+    background: #fff;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.table-select-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.styled-select {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    min-width: 200px;
+}
+
+.search-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.search-group input {
+    flex: 1;
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+/* 列族样式 */
+.column-family {
+    margin-bottom: 24px;
+}
+
+.column-family-header {
+    padding: 8px 0;
+    margin-bottom: 12px;
+    font-weight: 500;
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.column-family-header i {
+    font-size: 1.1rem;
+}
+
+/* 按钮样式 */
+.primary-button {
+    padding: 6px 12px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.primary-button:hover {
+    background-color: var(--primary-hover);
+}
+
+.primary-button i {
+    font-size: 1.1rem;
+}
+
+/* 模态框样式 */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 8px;
+    width: 500px;
+    max-width: 90%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    animation: modalSlideIn 0.3s ease;
+}
+
+.modal-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #666;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.close-button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--error-color);
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    background-color: #f8f9fa;
+    border-radius: 0 0 8px 8px;
+}
+
+/* 表单样式 */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.form-group input[type="text"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+}
+
+.form-group input[type="text"]:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+}
+
+.file-input-group {
+    border: 2px dashed var(--border-color);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 20px;
+    transition: all 0.2s;
+    background-color: #fafafa;
+}
+
+.file-input-group:hover {
+    border-color: var(--primary-color);
+    background-color: #f8f9fa;
+}
+
+.file-input-group label {
+    color: #555;
+    margin-bottom: 8px;
+    display: block;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.file-input-group input[type="file"] {
+    display: none;
+}
+
+.file-input-group .file-upload-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #666;
+    transition: all 0.2s;
+}
+
+.file-input-group .file-upload-button:hover {
+    background-color: #f0f0f0;
+    border-color: #ccc;
+}
+
+.file-name {
+    margin-top: 8px;
+    color: #666;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.file-name i {
+    font-size: 1rem;
+    color: var(--primary-color);
+}
+
+/* 按钮样式优化 */
+.secondary-button {
+    padding: 6px 12px;
+    background-color: #fff;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.secondary-button:hover {
+    background-color: rgba(33, 150, 243, 0.05);
+}
+
+/* 动画效果 */
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* 消息提示样式 */
+.message-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 24px;
+    border-radius: 4px;
+    background-color: #333;
+    color: white;
+    font-size: 0.9rem;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+}
+
+.message-toast.success {
+    background-color: var(--success-color);
+}
+
+.message-toast.error {
+    background-color: var(--error-color);
+}
+
+.message-toast.fade-out {
+    animation: fadeOut 0.3s ease forwards;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* 空状态样式 */
+.empty-state {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 40px;
+    text-align: center;
+    background-color: #fff;
+}
+
+.empty-state i {
+    font-size: 64px;
+    color: #ccc;
+    margin-bottom: 24px;
+}
+
+.empty-state h2 {
+    margin: 0 0 12px 0;
+    font-size: 24px;
+    font-weight: 500;
+    color: #333;
+}
+
+.empty-state p {
+    margin: 0 0 24px 0;
+    font-size: 14px;
+    color: #666;
+    max-width: 400px;
+}
+
+.empty-state .primary-button {
+    padding: 8px 24px;
+    font-size: 1rem;
+}
+
+.empty-state .primary-button i {
+    font-size: 1.2rem;
+    color: white;
+    margin: 0 4px 0 0;
+}
+
+/* 添加一个渐变背景，使空状态更有视觉效果 */
+.empty-state::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+    z-index: -1;
+}
+
+/* 添加一个轻微的动画效果 */
+.empty-state.show {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 加载效果样式 */
+.button-loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.button-loading > * {
+    opacity: 0.5;
+}
+
+.button-loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin: -8px 0 0 -8px;
+    border: 2px solid;
+    border-radius: 50%;
+    animation: button-loading-spinner 0.75s linear infinite;
+}
+
+/* 主要按钮加载样式 */
+.primary-button.button-loading::after {
+    border-color: rgba(255, 255, 255, 0.8);
+    border-right-color: transparent;
+}
+
+/* 次要按钮加载样式 */
+.secondary-button.button-loading::after {
+    border-color: var(--primary-color);
+    border-right-color: transparent;
+}
+
+/* 按钮加载时的背景色 */
+.primary-button.button-loading {
+    background-color: var(--primary-hover);
+}
+
+.secondary-button.button-loading {
+    background-color: rgba(33, 150, 243, 0.1);
+}
+
+@keyframes button-loading-spinner {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+} 

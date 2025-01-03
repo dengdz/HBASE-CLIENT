@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HBase 客户端</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="mdi mdi-database"></i>
+                <span>HBase Client</span>
+            </div>
+            <div class="data-sources">
+                <div class="data-sources-header">
+                    <span>数据源</span>
+                    <button id="addDataSourceBtn" class="icon-button">
+                        <i class="mdi mdi-plus"></i>
+                    </button>
+                </div>
+                <div id="dataSourcesList" class="data-sources-list">
+                    <!-- 数据源列表将通过 JS 动态添加 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <div id="emptyState" class="empty-state">
+                <i class="mdi mdi-database-plus"></i>
+                <h2>开始使用 HBase 客户端</h2>
+                <p>点击左侧 "+" 按钮或下方按钮添加 HBase 数据源</p>
+                <button id="emptyStateAddBtn" class="primary-button">
+                    <i class="mdi mdi-plus"></i>
+                    <span>添加数据源</span>
+                </button>
+            </div>
+
+            <div id="queryInterface" class="query-interface" style="display: none;">
+                <div class="query-header">
+                    <div class="query-toolbar">
+                        <div class="table-select-group">
+                            <i class="mdi mdi-table"></i>
+                            <select id="tableSelect" class="styled-select">
+                                <option value="">选择表</option>
+                            </select>
+                        </div>
+                        <div class="search-group">
+                            <i class="mdi mdi-magnify"></i>
+                            <input type="text" id="rowkeySearch" placeholder="输入 RowKey 搜索">
+                            <button id="searchBtn" class="primary-button">
+                                <i class="mdi mdi-magnify"></i>
+                                <span>搜索</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="query-content">
+                    <!-- 左侧 RowKey 列表 -->
+                    <div class="rowkey-list">
+                        <div class="panel-header">
+                            <span>RowKey 列表</span>
+                            <span class="row-count">前 100 条</span>
+                        </div>
+                        <div class="list-content" id="rowkeyList">
+                            <!-- RowKey 列表将通过 JS 动态添加 -->
+                        </div>
+                    </div>
+
+                    <!-- 右侧数据详情 -->
+                    <div class="data-detail">
+                        <div class="panel-header">
+                            <span>数据详情</span>
+                            <span id="selectedRowkey"></span>
+                        </div>
+                        <div class="detail-content" id="dataDetail">
+                            <!-- 数据详情将通过 JS 动态添加 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加数据源模态框 -->
+    <div id="dataSourceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加数据源</h3>
+                <button class="close-button">
+                    <i class="mdi mdi-close"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>数据源名称</label>
+                    <input type="text" id="dataSourceName" placeholder="输入数据源名称">
+                </div>
+                <div class="form-group">
+                    <label>ZooKeeper 地址</label>
+                    <input type="text" id="zkQuorum" placeholder="例如: localhost:2181">
+                </div>
+                <div class="file-input-group">
+                    <label>core-site.xml</label>
+                    <label class="file-upload-button" for="coreSiteFile">
+                        <i class="mdi mdi-upload"></i>
+                        <span>选择文件</span>
+                    </label>
+                    <input type="file" id="coreSiteFile" accept=".xml">
+                    <div class="file-name">
+                        <i class="mdi mdi-file-document-outline"></i>
+                        <span>未选择文件</span>
+                    </div>
+                </div>
+                <div class="file-input-group">
+                    <label>hbase-site.xml</label>
+                    <label class="file-upload-button" for="hbaseSiteFile">
+                        <i class="mdi mdi-upload"></i>
+                        <span>选择文件</span>
+                    </label>
+                    <input type="file" id="hbaseSiteFile" accept=".xml">
+                    <div class="file-name">
+                        <i class="mdi mdi-file-document-outline"></i>
+                        <span>未选择文件</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="testConnectionBtn" class="secondary-button">
+                    <i class="mdi mdi-connection"></i>
+                    <span>测试连接</span>
+                </button>
+                <button id="saveDataSourceBtn" class="primary-button">
+                    <i class="mdi mdi-content-save"></i>
+                    <span>保存</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html> 
