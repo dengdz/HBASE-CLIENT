@@ -4,6 +4,8 @@ import cn.dengdz.hbaseclient.mapper.HBaseMapper;
 import cn.dengdz.hbaseclient.model.HBaseData;
 import cn.dengdz.hbaseclient.service.HBaseService;
 import cn.dengdz.hbaseclient.util.DataSourceContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,6 +15,8 @@ import java.util.List;
 @Service
 public class HBaseServiceImpl implements HBaseService {
 
+    private static final Logger log = LoggerFactory.getLogger(HBaseServiceImpl.class);
+
     @Autowired
     private HBaseMapper hbaseMapper;
 
@@ -20,8 +24,10 @@ public class HBaseServiceImpl implements HBaseService {
     public void connect(String zkQuorum) throws Exception {
         String dataSourceId = DataSourceContext.getCurrentDataSourceId();
         if (dataSourceId == null) {
+            log.error("未设置当前数据源ID");
             throw new IllegalStateException("未设置当前数据源ID");
         }
+        log.info("正在连接数据源: {}, zkQuorum: {}", dataSourceId, zkQuorum);
         hbaseMapper.initConnection(zkQuorum);
     }
 
@@ -70,6 +76,16 @@ public class HBaseServiceImpl implements HBaseService {
     @Override
     public List<String> searchRows(String tableName, String rowkey) throws Exception {
         return hbaseMapper.searchRows(tableName, rowkey);
+    }
+
+    @Override
+    public void addData(String table, String rowKey, String columnFamily, String column, String value) throws Exception {
+        hbaseMapper.addData(table, rowKey, columnFamily, column, value);
+    }
+
+    @Override
+    public void deleteData(String table, String rowKey) throws Exception {
+        hbaseMapper.deleteData(table, rowKey);
     }
 
     private String getCurrentDataSourceId() {

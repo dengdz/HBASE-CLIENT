@@ -9,6 +9,8 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import java.io.File;
@@ -26,6 +28,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @Repository
 public class HBaseMapperImpl implements HBaseMapper {
+    
+    private static final Logger log = LoggerFactory.getLogger(HBaseMapperImpl.class);
+    
     private Connection connection;
     private Configuration configuration;
     private final StorageConfig storageConfig;
@@ -47,12 +52,12 @@ public class HBaseMapperImpl implements HBaseMapper {
         try {
             // 获取数据源配置目录的完整路径
             java.nio.file.Path configDir = Paths.get(storageConfig.getConfigPath(dataSourceId));
-            
-            System.out.println("Uploading config files to: " + configDir);
+
+            log.info("正在上传配置文件至：{}", configDir);
             
             // 如果目录已存在，先删除
             if (Files.exists(configDir)) {
-                System.out.println("Deleting existing config directory");
+                log.info("删除现有的配置目录");
                 FileUtils.deleteDirectory(configDir.toFile());
             }
             
@@ -66,11 +71,11 @@ public class HBaseMapperImpl implements HBaseMapper {
             Files.copy(coreSite.getInputStream(), coreSitePath, StandardCopyOption.REPLACE_EXISTING);
             Files.copy(hbaseSite.getInputStream(), hbaseSitePath, StandardCopyOption.REPLACE_EXISTING);
             
-            System.out.println("Config files uploaded successfully");
-            System.out.println("core-site.xml saved to: " + coreSitePath);
-            System.out.println("hbase-site.xml saved to: " + hbaseSitePath);
+            log.info("配置文件上传成功");
+            log.info("core-site.xml 保存至：{}", coreSitePath);
+            log.info("hbase-site.xml保存至：{}", hbaseSitePath);
         } catch (IOException e) {
-            System.err.println("Failed to upload config files: " + e.getMessage());
+            log.error("无法上传配置文件：{}", e.getMessage());
             e.printStackTrace();
             throw new Exception("保存配置文件失败: " + e.getMessage());
         }
@@ -113,8 +118,8 @@ public class HBaseMapperImpl implements HBaseMapper {
             configuration = HBaseConfiguration.create();
             
             // 添加配置文件
-            System.out.println("Loading core-site.xml from: " + coreSitePath);
-            System.out.println("Loading hbase-site.xml from: " + hbaseSitePath);
+            log.info("从以下位置加载 core-site.xml：{}", coreSitePath);
+            log.info("从以下位置加载 hbase-site.xml：{}", hbaseSitePath);
             
             configuration.addResource(new Path(coreSitePath.toUri()));
             configuration.addResource(new Path(hbaseSitePath.toUri()));
@@ -126,9 +131,9 @@ public class HBaseMapperImpl implements HBaseMapper {
                     .collect(Collectors.joining(","));
             String zkPort = zkNodes[0].split(":")[1];
 
-            System.out.println("Setting ZooKeeper configuration:");
-            System.out.println("hbase.zookeeper.quorum: " + zkHosts);
-            System.out.println("hbase.zookeeper.property.clientPort: " + zkPort);
+            log.info("设置 ZooKeeper 配置：");
+            log.info("hbase.zookeeper.quorum：{}", zkHosts);
+            log.info("hbase.zookeeper.property.clientPort: {}", zkPort);
 
             configuration.set("hbase.zookeeper.quorum", zkHosts);
             configuration.set("hbase.zookeeper.property.clientPort", zkPort);
@@ -143,16 +148,16 @@ public class HBaseMapperImpl implements HBaseMapper {
 
             try {
                 // 创建新连接
-                System.out.println("Attempting to create HBase connection...");
+                log.info("正在尝试创建 HBase 连接...");
                 connection = ConnectionFactory.createConnection(configuration);
-                System.out.println("HBase connection created successfully");
+                log.info("HBase 连接创建成功");
             } catch (Exception e) {
-                System.err.println("Failed to create HBase connection: " + e.getMessage());
+                log.error("无法创建 HBase 连接：{}", e.getMessage());
                 e.printStackTrace();
                 throw new Exception("创建 HBase 连接失败: " + e.getMessage());
             }
         } catch (Exception e) {
-            System.err.println("Reconnection failed: " + e.getMessage());
+            log.error("重新连接失败：{}", e.getMessage());
             e.printStackTrace();
             throw e;
         }
@@ -273,6 +278,32 @@ public class HBaseMapperImpl implements HBaseMapper {
             return rowkeys;
         } catch (Exception e) {
             throw new Exception("搜索RowKey失败: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void addData(String table, String rowKey, String columnFamily, String column, String value) throws Exception {
+        try (Table hTable = connection.getTable(TableName.valueOf(table))) {
+            Put put = new Put(Bytes.toBytes(rowKey));
+            put.addColumn(
+                Bytes.toBytes(columnFamily),
+                Bytes.toBytes(column),
+                Bytes.toBytes(value)
+            );
+            
+            hTable.put(put);
+        } catch (Exception e) {
+            throw new Exception("添加数据失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void deleteData(String table, String rowKey) throws Exception {
+        try (Table hTable = connection.getTable(TableName.valueOf(table))) {
+            Delete delete = new Delete(Bytes.toBytes(rowKey));
+            hTable.delete(delete);
+        } catch (Exception e) {
+            throw new Exception("删除数据失败: " + e.getMessage());
         }
     }
 } 

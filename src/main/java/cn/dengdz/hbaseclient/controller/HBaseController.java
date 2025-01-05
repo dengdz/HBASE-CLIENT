@@ -3,6 +3,8 @@ package cn.dengdz.hbaseclient.controller;
 import cn.dengdz.hbaseclient.model.HBaseData;
 import cn.dengdz.hbaseclient.service.HBaseService;
 import cn.dengdz.hbaseclient.util.DataSourceContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,10 +12,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
+
 @RestController
 @RequestMapping("/api")
 @CrossOrigin
 public class HBaseController {
+
+    private static final Logger log = LoggerFactory.getLogger(HBaseController.class);
 
     @Autowired
     private HBaseService hbaseService;
@@ -124,20 +129,15 @@ public class HBaseController {
     public ResponseEntity<?> connect(@PathVariable String id, @RequestBody Map<String, String> request) {
         try {
             DataSourceContext.setCurrentDataSourceId(id);
-            String zkQuorum = request.get("host");
+            String host = request.get("host");
+            log.info("尝试连接数据源: {}, host: {}", id, host);
             
-            if (!hbaseService.checkConfigExists()) {
-                throw new Exception("配置文件不存在，请先上传配置文件");
-            }
-            
-            hbaseService.connect(zkQuorum);
+            hbaseService.connect(host);
             List<String> tables = hbaseService.listTables();
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "连接成功");
-            response.put("tables", tables);
-            return ResponseEntity.ok(response);
+            
+            return ResponseEntity.ok(Collections.singletonMap("tables", tables));
         } catch (Exception e) {
+            log.error("连接数据源失败: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body(Collections.singletonMap("error", e.getMessage()));
         } finally {
             DataSourceContext.clear();
@@ -177,6 +177,47 @@ public class HBaseController {
             DataSourceContext.setCurrentDataSourceId(id);
             HBaseData data = hbaseService.getRow(table, rowkey);
             return ResponseEntity.ok(data.getFamilyMap());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("error", e.getMessage()));
+        } finally {
+            DataSourceContext.clear();
+        }
+    }
+
+    @PostMapping("/datasource/{id}/add-data")
+    public ResponseEntity<?> addData(@PathVariable String id,
+                               @RequestBody Map<String, String> request) {
+        try {
+            DataSourceContext.setCurrentDataSourceId(id);
+            
+            String table = request.get("table");
+            String rowKey = request.get("rowKey");
+            String columnFamily = request.get("columnFamily");
+            String column = request.get("column");
+            String value = request.get("value");
+
+            hbaseService.addData(table, rowKey, columnFamily, column, value);
+            
+            return ResponseEntity.ok(Collections.singletonMap("message", "数据添加成功"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("error", e.getMessage()));
+        } finally {
+            DataSourceContext.clear();
+        }
+    }
+
+    @DeleteMapping("/datasource/{id}/delete-data")
+    public ResponseEntity<?> deleteData(@PathVariable String id,
+                                  @RequestBody Map<String, String> request) {
+        try {
+            DataSourceContext.setCurrentDataSourceId(id);
+            
+            String table = request.get("table");
+            String rowKey = request.get("rowKey");
+
+            hbaseService.deleteData(table, rowKey);
+            
+            return ResponseEntity.ok(Collections.singletonMap("message", "数据删除成功"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Collections.singletonMap("error", e.getMessage()));
         } finally {

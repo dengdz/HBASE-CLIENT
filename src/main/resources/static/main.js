@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 渲染数据源列表
     function renderDataSources() {
         dataSourcesList.innerHTML = '';
-        dataSources.forEach(ds => {
+        dataSources.forEach((ds, index) => {
             const item = document.createElement('div');
             item.className = `data-source-item ${ds === activeDataSource ? 'active' : ''}`;
             item.innerHTML = `
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="data-source-actions">
                     <button class="icon-button" title="删除数据源">
-                        <i class="mdi mdi-delete"></i>
+                        <i class="mdi mdi-delete-outline"></i>
                     </button>
                 </div>
             `;
@@ -58,7 +58,18 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             dataSourcesList.appendChild(item);
+            
+            // 仅在新添加数据源时应用动画
+            if (ds.isNew) {
+                item.classList.add('animate');
+                // 强制重绘
+                item.offsetHeight;
+                item.classList.add('show');
+                // 移除新添加标记
+                delete ds.isNew;
+            }
         });
+        updateEmptyState();
     }
 
     // 更新空状态显示
@@ -172,49 +183,62 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            // 先创建数据源对象
             const newDataSource = {
                 id: Date.now().toString(),
                 name: name,
                 zkQuorum: zkQuorum,
-                configured: true
+                configured: true,
+                isNew: true
             };
 
+            // 1. 先上传配置文件
             const formData = new FormData();
             formData.append('core-site', coreSiteFile);
             formData.append('hbase-site', hbaseSiteFile);
 
-            const uploadResponse = await fetch(`/api/datasource/${newDataSource.id}/upload-config`, {
-                method: 'POST',
-                body: formData
-            });
+            try {
+                const uploadResponse = await fetch(`/api/datasource/${newDataSource.id}/upload-config`, {
+                    method: 'POST',
+                    body: formData
+                });
 
-            if (!uploadResponse.ok) {
-                const errorData = await uploadResponse.json();
-                throw new Error(errorData.error || '配置文件上传失败');
+                if (!uploadResponse.ok) {
+                    const errorData = await uploadResponse.json();
+                    throw new Error(errorData.error || '配置文件上传失败');
+                }
+
+                // 2. 等待一小段时间确保文件已经保存
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // 3. 尝试连接
+                const connectResponse = await fetch(`/api/datasource/${newDataSource.id}/connect`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ host: zkQuorum })
+                });
+
+                if (!connectResponse.ok) {
+                    const errorData = await connectResponse.json();
+                    throw new Error(errorData.error || '连接失败');
+                }
+
+                // 4. 如果连接成功，保存数据源
+                dataSources.push(newDataSource);
+                localStorage.setItem('hbaseDataSources', JSON.stringify(dataSources));
+                renderDataSources();
+                hideModal();
+                
+                // 5. 选择新创建的数据源
+                selectDataSource(newDataSource);
+                showMessage('数据源创建成功', 'success');
+            } catch (error) {
+                // 如果出错，清理已上传的配置文件
+                await fetch(`/api/datasource/${newDataSource.id}`, { method: 'DELETE' });
+                throw error;
             }
-
-            const connectResponse = await fetch(`/api/datasource/${newDataSource.id}/connect`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ host: zkQuorum })
-            });
-
-            if (!connectResponse.ok) {
-                const errorData = await connectResponse.json();
-                throw new Error(errorData.error || '连接失败');
-            }
-
-            const data = await connectResponse.json();
-
-            dataSources.push(newDataSource);
-            localStorage.setItem('hbaseDataSources', JSON.stringify(dataSources));
-            renderDataSources();
-            hideModal();
-            
-            selectDataSource(newDataSource);
-            showMessage('数据源创建成功', 'success');
         } catch (error) {
             console.error('保存数据源失败:', error);
             showMessage(error.message, 'error');
@@ -226,7 +250,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // 选择数据源
     async function selectDataSource(dataSource) {
         try {
-            // 使用新的API路径
             const response = await fetch(`/api/datasource/${dataSource.id}/connect`, {
                 method: 'POST',
                 headers: {
@@ -247,85 +270,130 @@ document.addEventListener('DOMContentLoaded', function() {
             emptyState.style.display = 'none';
             queryInterface.style.display = 'flex';
             
-            // 更新表下拉框
-            const tableSelect = document.getElementById('tableSelect');
-            tableSelect.innerHTML = '<option value="">选择表</option>';
-            data.tables.forEach(table => {
-                const option = document.createElement('option');
-                option.value = table;
-                option.textContent = table;
-                tableSelect.appendChild(option);
-            });
+            // 使用新的更新表下拉框函数
+            updateTableSelect(data.tables);
 
             // 清空之前的查询结果
             document.getElementById('rowkeyList').innerHTML = '';
             document.getElementById('dataDetail').innerHTML = '';
-
-            // 添加表选择事件
-            tableSelect.addEventListener('change', () => {
-                if (tableSelect.value) {
-                    loadRowKeys(tableSelect.value);
-                }
-            });
         } catch (error) {
             console.error('选择数据源失败:', error);
             showMessage('连接失败: ' + error.message, 'error');
         }
     }
 
-    // 修改加载 RowKey 列表的函数
+    // 加载 RowKey 列表
     async function loadRowKeys(tableName, searchKey = '') {
         try {
-            let url = `/api/datasource/${activeDataSource.id}/list-rows?table=${encodeURIComponent(tableName)}`;
-            
-            // 如果有搜索关键字，添加到请求参数中
-            if (searchKey) {
-                url += `&rowkey=${encodeURIComponent(searchKey)}`;
-            } else {
-                url += '&limit=100'; // 只有在没有搜索关键字时才使用limit参数
-            }
-
-            const response = await fetch(url);
+            const response = await fetch(`/api/datasource/${activeDataSource.id}/list-rows?table=${encodeURIComponent(tableName)}${searchKey ? '&rowkey=' + encodeURIComponent(searchKey) : ''}`);
             if (!response.ok) {
-                throw new Error('加载 RowKey 列表失败');
+                throw new Error('加载RowKey列表失败');
             }
 
             const data = await response.json();
             const rowkeyList = document.getElementById('rowkeyList');
             rowkeyList.innerHTML = '';
 
-            // 更新行数显示
-            const rowCount = document.querySelector('.row-count');
-            if (searchKey) {
-                rowCount.textContent = `搜索结果: ${data.rowkeys.length}条`;
-                // 只展示匹配的rowkey
-                if (data.rowkeys.length > 0) {
-                    const exactMatch = data.rowkeys[0]; // 假设返回的第一个就是匹配的
-                    renderRowKeyItem(exactMatch);
-                    loadRowData(tableName, exactMatch); // 自动加载该rowkey的数据
-                }
-            } else {
-                rowCount.textContent = '前100条';
-                // 显示所有结果
-                data.rowkeys.forEach(rowkey => renderRowKeyItem(rowkey));
-            }
-        } catch (error) {
-            console.error('加载 RowKey 列表失败:', error);
-            showMessage('加载 RowKey 列表失败: ' + error.message, 'error');
-        }
+            data.rowkeys.forEach((rowkey, index) => {
+                const item = document.createElement('div');
+                item.className = 'rowkey-item';
+                item.innerHTML = `
+                    <div class="rowkey-content">
+                        <i class="mdi mdi-key-variant"></i>
+                        <span data-rowkey="${rowkey}">${rowkey}</span>
+                    </div>
+                    <div class="rowkey-actions">
+                        <button class="icon-button delete-btn" title="删除">
+                            <i class="mdi mdi-delete-outline"></i>
+                        </button>
+                    </div>
+                `;
 
-        // 辅助函数：渲染单个 RowKey 项
-        function renderRowKeyItem(rowkey) {
-            const item = document.createElement('div');
-            item.className = 'rowkey-item';
-            item.innerHTML = `
-                <i class="mdi mdi-key"></i>
-                <span>${rowkey}</span>
-            `;
-            item.addEventListener('click', (event) => {
-                loadRowData(tableName, rowkey); // 直接调用 loadRowData
+                // 添加悬停显示功能
+                const rowkeySpan = item.querySelector('.rowkey-content span');
+                rowkeySpan.addEventListener('mouseenter', (e) => {
+                    if (e.target.offsetWidth < e.target.scrollWidth) {
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'rowkey-tooltip';
+                        tooltip.textContent = rowkey;
+                        document.body.appendChild(tooltip);
+                        
+                        const updateTooltipPosition = (event) => {
+                            tooltip.style.left = `${event.pageX + 10}px`;
+                            tooltip.style.top = `${event.pageY + 10}px`;
+                        };
+                        
+                        updateTooltipPosition(e);
+                        // 强制重绘
+                        tooltip.offsetHeight;
+                        tooltip.classList.add('show');
+                        
+                        rowkeySpan.addEventListener('mousemove', updateTooltipPosition);
+                        
+                        rowkeySpan.addEventListener('mouseleave', () => {
+                            tooltip.remove();
+                            rowkeySpan.removeEventListener('mousemove', updateTooltipPosition);
+                        });
+                    }
+                });
+
+                // 点击 RowKey 加载数据
+                item.querySelector('.rowkey-content').addEventListener('click', () => {
+                    // 移除其他项的活动状态
+                    rowkeyList.querySelectorAll('.rowkey-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    loadRowData(tableName, rowkey);
+                });
+
+                // 点击删除按钮
+                item.querySelector('.delete-btn').addEventListener('click', (e) => {
+                    e.stopPropagation(); // 阻止事件冒泡
+                    if (confirm(`确定要删除 RowKey "${rowkey}" 吗？`)) {
+                        deleteRowKey(tableName, rowkey);
+                    }
+                });
+
+                rowkeyList.appendChild(item);
+                
+                // 添加延迟动画效果
+                setTimeout(() => {
+                    item.classList.add('show');
+                }, index * 50); // 每项延迟 50ms
             });
-            rowkeyList.appendChild(item);
+        } catch (error) {
+            console.error('加载RowKey列表失败:', error);
+            showMessage('加载RowKey列表失败: ' + error.message, 'error');
+        }
+    }
+
+    // 删除 RowKey
+    async function deleteRowKey(tableName, rowKey) {
+        try {
+            const response = await fetch(`/api/datasource/${activeDataSource.id}/delete-data`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    table: tableName,
+                    rowKey: rowKey
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || '删除失败');
+            }
+
+            showMessage('删除成功', 'success');
+            // 重新加载 RowKey 列表
+            loadRowKeys(tableName);
+            // 清空数据详情
+            document.getElementById('dataDetail').innerHTML = '';
+            document.getElementById('selectedRowkey').textContent = '';
+        } catch (error) {
+            console.error('删除失败:', error);
+            showMessage(error.message, 'error');
         }
     }
 
@@ -378,26 +446,109 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 添加搜索功能
+    // 搜索按钮事件 - 这个可以工作
     document.getElementById('searchBtn').addEventListener('click', () => {
         const tableName = document.getElementById('tableSelect').value;
-        const rowkey = document.getElementById('rowkeySearch').value.trim();
-        
         if (!tableName) {
-            showMessage('请选择表', 'error');
+            showMessage('请先选择表', 'error');
             return;
         }
-
+        const rowkey = document.getElementById('rowkeySearch').value.trim();
         loadRowKeys(tableName, rowkey);
     });
 
-    // 添加搜索框的回车事件处理
-    document.getElementById('rowkeySearch').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            document.getElementById('searchBtn').click();
+    // 新增按钮事件 - 按照相同的逻辑编写
+    document.getElementById('addDataBtn').addEventListener('click', () => {
+        const tableName = document.getElementById('tableSelect').value;
+        if (!tableName) {
+            showMessage('请先选择操作表', 'error');
+            return;
         }
+        showAddDataModal();
     });
+
+    // 新增数据相关函数
+    function showAddDataModal() {
+        const modal = document.getElementById('addDataModal');
+        modal.style.display = 'block';
+        // 强制重绘
+        modal.offsetHeight;
+        modal.classList.add('show');
+        // 清空表单
+        document.getElementById('newRowKey').value = '';
+        document.getElementById('newColumnFamily').value = '';
+        document.getElementById('newColumn').value = '';
+        document.getElementById('newValue').value = '';
+        
+        // 聚焦到 RowKey 输入框
+        document.getElementById('newRowKey').focus();
+    }
+
+    function hideAddDataModal() {
+        const modal = document.getElementById('addDataModal');
+        modal.classList.remove('show');
+        // 等待动画完成后隐藏
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+    }
+
+    // 模态框按钮事件
+    document.querySelector('#addDataModal .close-button').addEventListener('click', hideAddDataModal);
+    document.getElementById('cancelAddData').addEventListener('click', hideAddDataModal);
+    document.getElementById('confirmAddData').addEventListener('click', saveData);
+
+    // 保存数据函数
+    async function saveData() {
+        const tableSelect = document.getElementById('tableSelect');
+        const rowKey = document.getElementById('newRowKey').value.trim();
+        const columnFamily = document.getElementById('newColumnFamily').value.trim();
+        const column = document.getElementById('newColumn').value.trim();
+        const value = document.getElementById('newValue').value.trim();
+
+        if (!rowKey || !columnFamily || !column || !value) {
+            showMessage('请填写所有必填字段', 'error');
+            return;
+        }
+
+        try {
+            // 添加保存按钮的加载状态
+            const saveButton = document.getElementById('confirmAddData');
+            setButtonLoading(saveButton, true);
+
+            const response = await fetch(`/api/datasource/${activeDataSource.id}/add-data`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    table: tableSelect.value,
+                    rowKey: rowKey,
+                    columnFamily: columnFamily,
+                    column: column,
+                    value: value
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || '添加数据失败');
+            }
+
+            showMessage('数据添加成功', 'success');
+            hideAddDataModal();
+            
+            // 刷新当前数据列表
+            loadRowKeys(tableSelect.value);
+        } catch (error) {
+            console.error('添加数据失败:', error);
+            showMessage(error.message, 'error');
+        } finally {
+            // 恢复保存按钮状态
+            const saveButton = document.getElementById('confirmAddData');
+            setButtonLoading(saveButton, false);
+        }
+    }
 
     // 修改表选择事件
     document.getElementById('tableSelect').addEventListener('change', () => {
@@ -550,6 +701,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 初始化加载
     loadDataSources();
+
+    // 更新表下拉框
+    function updateTableSelect(tables) {
+        const tableSelect = document.getElementById('tableSelect');
+        // 只添加一个空选项，不添加"选择表"文字
+        tableSelect.innerHTML = '<option value=""></option>';
+        tables.forEach(table => {
+            const option = document.createElement('option');
+            option.value = table;
+            option.textContent = table;
+            tableSelect.appendChild(option);
+        });
+    }
 });
 
 // 添加消息提示函数
@@ -558,10 +722,15 @@ function showMessage(message, type = 'info') {
     messageDiv.className = `message-toast ${type}`;
     messageDiv.textContent = message;
     document.body.appendChild(messageDiv);
+    
+    // 强制重绘
+    messageDiv.offsetHeight;
+    messageDiv.classList.add('show');
 
-    // 3秒后自动消失
     setTimeout(() => {
-        messageDiv.classList.add('fade-out');
-        setTimeout(() => document.body.removeChild(messageDiv), 300);
+        messageDiv.classList.remove('show');
+        setTimeout(() => {
+            document.body.removeChild(messageDiv);
+        }, 300);
     }, 3000);
 } 

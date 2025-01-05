@@ -45,8 +45,8 @@
                     <div class="query-toolbar">
                         <div class="table-select-group">
                             <i class="mdi mdi-table"></i>
-                            <select id="tableSelect" class="styled-select">
-                                <option value="">选择表</option>
+                            <select id="tableSelect" class="styled-select" placeholder="请选择表">
+                                <option value=""></option>
                             </select>
                         </div>
                         <div class="search-group">
@@ -55,6 +55,10 @@
                             <button id="searchBtn" class="primary-button">
                                 <i class="mdi mdi-magnify"></i>
                                 <span>搜索</span>
+                            </button>
+                            <button id="addDataBtn" class="primary-button">
+                                <i class="mdi mdi-plus"></i>
+                                <span>新增</span>
                             </button>
                         </div>
                     </div>
@@ -139,6 +143,40 @@
                     <i class="mdi mdi-content-save"></i>
                     <span>保存</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增数据的模态框 -->
+    <div id="addDataModal" class="slide-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>新增数据</h3>
+                <button class="close-button">
+                    <i class="mdi mdi-close"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="field-group">
+                    <label>RowKey</label>
+                    <input type="text" id="newRowKey" placeholder="请输入 RowKey">
+                </div>
+                <div class="field-group">
+                    <label>列族</label>
+                    <input type="text" id="newColumnFamily" placeholder="请输入列族">
+                </div>
+                <div class="field-group">
+                    <label>列名</label>
+                    <input type="text" id="newColumn" placeholder="请输入列名">
+                </div>
+                <div class="field-group">
+                    <label>值</label>
+                    <input type="text" id="newValue" placeholder="请输入值">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-button" id="cancelAddData">取消</button>
+                <button class="primary-button" id="confirmAddData">保存</button>
             </div>
         </div>
     </div>
