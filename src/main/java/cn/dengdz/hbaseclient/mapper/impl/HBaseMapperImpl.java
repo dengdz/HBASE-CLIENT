@@ -306,4 +306,24 @@ public class HBaseMapperImpl implements HBaseMapper {
             throw new Exception("删除数据失败: " + e.getMessage());
         }
     }
+
+    @Override
+    public void addColumnFamily(String tableName, String familyName) throws Exception {
+        try {
+            Admin admin = connection.getAdmin();
+            TableName table = TableName.valueOf(tableName);
+            
+            // 检查表是否存在
+            if (!admin.tableExists(table)) {
+                throw new IOException("表不存在");
+            }
+            
+            // 添加列簇
+            ColumnFamilyDescriptor columnFamilyDescriptor = 
+                ColumnFamilyDescriptorBuilder.newBuilder(Bytes.toBytes(familyName)).build();
+            admin.addColumnFamily(table, columnFamilyDescriptor);
+        } catch (Exception e) {
+            throw new Exception("添加列簇失败: " + e.getMessage());
+        }
+    }
 } 

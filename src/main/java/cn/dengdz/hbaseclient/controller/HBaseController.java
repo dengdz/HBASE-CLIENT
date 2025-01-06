@@ -224,4 +224,23 @@ public class HBaseController {
             DataSourceContext.clear();
         }
     }
+
+    @PostMapping("/datasource/{id}/add-family")
+    public ResponseEntity<?> addColumnFamily(@PathVariable String id,
+                                       @RequestBody Map<String, String> request) {
+        try {
+            DataSourceContext.setCurrentDataSourceId(id);
+            
+            String tableName = request.get("table");
+            String familyName = request.get("familyName");
+            
+            hbaseService.addColumnFamily(tableName, familyName);
+            
+            return ResponseEntity.ok(Collections.singletonMap("message", "列簇添加成功"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("error", e.getMessage()));
+        } finally {
+            DataSourceContext.clear();
+        }
+    }
 } 
