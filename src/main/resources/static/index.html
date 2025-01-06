@@ -48,6 +48,10 @@
                             <select id="tableSelect" class="styled-select" placeholder="请选择表">
                                 <option value=""></option>
                             </select>
+                            <button id="addFamilyBtn" class="primary-button" style="margin-left: 10px;">
+                                <i class="mdi mdi-plus"></i>
+                                <span>添加列簇</span>
+                            </button>
                         </div>
                         <div class="search-group">
                             <i class="mdi mdi-magnify"></i>
@@ -177,6 +181,34 @@
             <div class="modal-footer">
                 <button class="secondary-button" id="cancelAddData">取消</button>
                 <button class="primary-button" id="confirmAddData">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加列簇的模态框 -->
+    <div id="addFamilyModal" class="slide-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加列簇</h3>
+                <button class="close-button">
+                    <i class="mdi mdi-close"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="field-group">
+                    <label>选择表</label>
+                    <select id="familyTableSelect" class="styled-select" style="width: 100%; box-sizing: border-box;">
+                        <option value="">请选择表</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>列簇名称</label>
+                    <input type="text" id="newFamilyName" placeholder="请输入列簇名称" style="width: 100%; box-sizing: border-box;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-button" id="cancelAddFamily">取消</button>
+                <button class="primary-button" id="confirmAddFamily">保存</button>
             </div>
         </div>
     </div>

@@ -3,6 +3,12 @@ package cn.dengdz.hbaseclient.service;
 import cn.dengdz.hbaseclient.model.HBaseData;
 import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
+import org.apache.hadoop.hbase.util.Bytes;
 
 public interface HBaseService {
     void connect(String zkQuorum) throws Exception;
@@ -17,4 +23,5 @@ public interface HBaseService {
     List<String> searchRows(String tableName, String rowkey) throws Exception;
     void addData(String table, String rowKey, String columnFamily, String column, String value) throws Exception;
     void deleteData(String table, String rowKey) throws Exception;
+    void addColumnFamily(String tableName, String familyName) throws Exception;
 } 

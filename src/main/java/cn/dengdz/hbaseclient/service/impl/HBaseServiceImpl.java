@@ -11,6 +11,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.io.IOException;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
+import org.apache.hadoop.hbase.TableName;
 
 @Service
 public class HBaseServiceImpl implements HBaseService {
@@ -86,6 +98,11 @@ public class HBaseServiceImpl implements HBaseService {
     @Override
     public void deleteData(String table, String rowKey) throws Exception {
         hbaseMapper.deleteData(table, rowKey);
+    }
+
+    @Override
+    public void addColumnFamily(String tableName, String familyName) throws Exception {
+        hbaseMapper.addColumnFamily(tableName, familyName);
     }
 
     private String getCurrentDataSourceId() {

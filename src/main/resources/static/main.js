@@ -714,6 +714,110 @@ document.addEventListener('DOMContentLoaded', function() {
             tableSelect.appendChild(option);
         });
     }
+
+    // 获取添加列簇相关的DOM元素
+    const addFamilyBtn = document.getElementById('addFamilyBtn');
+    const addFamilyModal = document.getElementById('addFamilyModal');
+    const cancelAddFamily = document.getElementById('cancelAddFamily');
+    const confirmAddFamily = document.getElementById('confirmAddFamily');
+
+    // 显示添加列簇对话框
+    function showAddFamilyModal() {
+        // 获取当前所有表并填充下拉框
+        const familyTableSelect = document.getElementById('familyTableSelect');
+        familyTableSelect.innerHTML = '<option value="">请选择表</option>';
+        
+        // 从主界面的表选择框获取所有表选项
+        const mainTableSelect = document.getElementById('tableSelect');
+        Array.from(mainTableSelect.options).forEach(option => {
+            if (option.value) { // 跳过空选项
+                const newOption = document.createElement('option');
+                newOption.value = option.value;
+                newOption.textContent = option.textContent;
+                familyTableSelect.appendChild(newOption);
+            }
+        });
+        
+        // 如果主界面已选择了表，则默认选中该表
+        if (mainTableSelect.value) {
+            familyTableSelect.value = mainTableSelect.value;
+        }
+        
+        addFamilyModal.style.display = 'block';
+        // 强制重绘
+        addFamilyModal.offsetHeight;
+        addFamilyModal.classList.add('show');
+        // 清空输入框
+        document.getElementById('newFamilyName').value = '';
+    }
+
+    // 隐藏添加列簇对话框
+    function hideAddFamilyModal() {
+        addFamilyModal.classList.remove('show');
+        setTimeout(() => {
+            addFamilyModal.style.display = 'none';
+        }, 300);
+    }
+
+    // 修改添加列簇函数
+    async function addColumnFamily() {
+        const tableSelect = document.getElementById('familyTableSelect');
+        const familyName = document.getElementById('newFamilyName').value.trim();
+        
+        if (!tableSelect.value) {
+            showMessage('请选择表', 'error');
+            return;
+        }
+        
+        if (!familyName) {
+            showMessage('请输入列簇名称', 'error');
+            return;
+        }
+        
+        try {
+            const saveButton = document.getElementById('confirmAddFamily');
+            setButtonLoading(saveButton, true);
+            
+            const response = await fetch(`/api/datasource/${activeDataSource.id}/add-family`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    table: tableSelect.value,
+                    familyName: familyName
+                })
+            });
+            
+            const result = await response.json();
+            if (response.ok) {
+                showMessage('添加列簇成功', 'success');
+                hideAddFamilyModal();
+                // 如果需要刷新列簇列表，可以在这里添加刷新逻辑
+            } else {
+                showMessage(result.error || '添加列簇失败', 'error');
+            }
+        } catch (error) {
+            console.error('添加列簇失败:', error);
+            showMessage('添加列簇失败', 'error');
+        } finally {
+            const saveButton = document.getElementById('confirmAddFamily');
+            setButtonLoading(saveButton, false);
+        }
+    }
+
+    // 添加事件监听
+    addFamilyBtn.addEventListener('click', showAddFamilyModal);
+    addFamilyModal.querySelector('.close-button').addEventListener('click', hideAddFamilyModal);
+    cancelAddFamily.addEventListener('click', hideAddFamilyModal);
+    confirmAddFamily.addEventListener('click', addColumnFamily);
+
+    // 点击模态框外部关闭
+    addFamilyModal.addEventListener('click', (e) => {
+        if (e.target === addFamilyModal) {
+            hideAddFamilyModal();
+        }
+    });
 });
 
 // 添加消息提示函数
